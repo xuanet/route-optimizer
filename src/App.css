@@ -11,6 +11,24 @@ html, body {
   width: 100%;
 }
 
+#place-search {
+  display: flex;
+  flex-direction: row;
+  height: 100px;
+}
+
+#place-search input {
+  margin: 10px;
+  height: 100px;
+  width: 100%
+}
+
+#place-search button {
+  margin: 10px;
+  height: 100px;
+
+
+}
 
 @keyframes App-logo-spin {
   from {

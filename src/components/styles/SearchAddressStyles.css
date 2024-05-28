@@ -1,0 +1,25 @@
+#autocomplete-box {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 10px
+}
+
+#autocomplete-box label {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+#autocomplete-box input {
+    flex-grow: 5;
+    padding: 10px;
+    height: 10px;
+    width: 400px;
+    margin-right: 10px;
+}
+
+#autocomplete-box button {
+    margin-left: 10px;
+}

@@ -11,3 +11,9 @@
     text-align:center;
     padding-bottom: 20px;
 }
+
+#input-field-encompass {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+}

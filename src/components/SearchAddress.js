@@ -1,17 +1,24 @@
 import React, { Component } from 'react';
 import { LoadScript, Autocomplete } from '@react-google-maps/api';
+import './styles/SearchAddressStyles.css'
 
 const libraries = ['places'];
 
 class SearchAddress extends Component {
     constructor(props) {
+        console.log('props for SearchAddress', props)
         super(props);
         this.autocomplete = null;
-        this.inputRef = React.createRef();
+        this.inputRefStart = React.createRef();
+        this.inputRefEnd = React.createRef();
 
         this.handleStartChanged = this.handleStartChanged.bind(this)
         this.handleEndChanged = this.handleEndChanged.bind(this)
+        this.handleLoadStart = this.handleLoadStart.bind(this)
+        this.handleLoadEnd = this.handleLoadEnd.bind(this)
+
     }
+
 
     handleLoadStart = (autocompleteInstance) => {
         this.autocompleteStart = autocompleteInstance;
@@ -50,27 +57,30 @@ class SearchAddress extends Component {
         const apiKey = this.props.apiKey;
         return (
             <React.Fragment>
+                <p>1. Choose start and end</p>
                 <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
-                    <label>Start</label>
-                    <Autocomplete libraries={libraries} onLoad={this.handleLoadStart}>
-                        <input
-                            type="text"
-                            ref={this.inputRef}
-                            placeholder="Search start address..."
-                            style={{ width: '40%', height: '40px', padding: '10px' }}
-                        />
-                    </Autocomplete>
-                    <button onClick={this.handleStartChanged}>Update Start</button>
-                    <label>End</label>
-                    <Autocomplete libraries={libraries} onLoad={this.handleLoadEnd}>
-                    <input
-                        type="text"
-                        ref={this.inputRef}
-                        placeholder="Search places..."
-                        style={{ width: '40%', height: '40px', padding: '10px' }}
-                    />
-                    </Autocomplete>
-                    <button onClick={this.handleEndChanged}>Update End</button>
+                    <div id='autocomplete-box'>
+                        <label>Start</label>
+                        <Autocomplete libraries={libraries} onLoad={this.handleLoadStart}>
+                            <input
+                                type="text"
+                                ref={this.inputRefStart}
+                                placeholder="Search start address..."
+                            />
+                        </Autocomplete>
+                        <button onClick={this.handleStartChanged}>Update Start</button>
+                    </div>
+                    <div id='autocomplete-box'>
+                        <label>End</label>
+                        <Autocomplete libraries={libraries} onLoad={this.handleLoadEnd}>
+                            <input
+                                type="text"
+                                ref={this.inputRefEnd}
+                                placeholder="Search end address..."
+                            />
+                        </Autocomplete>
+                        <button onClick={this.handleEndChanged}>Update End</button>
+                    </div>
                 </LoadScript>
             </React.Fragment>
         );

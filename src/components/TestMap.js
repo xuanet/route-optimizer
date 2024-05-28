@@ -3,7 +3,7 @@ import { APIProvider, Map, Marker } from '@vis.gl/react-google-maps';
 import './styles/TestMapStyles.css'
 
 
-function TestMap({ startAddress, endAddress, apiKey} ) {
+function TestMap({ startAddress, endAddress, apiKey } ) {
 
     // useEffect(() => {
     //     console.log('start updated', startAddress)
@@ -17,11 +17,11 @@ function TestMap({ startAddress, endAddress, apiKey} ) {
     
     return (
 
-        <APIProvider apiKey={apiKey}>
+        <APIProvider apiKey={apiKey} onLoad={() => console.log('map loaded')}>
             <div id='map-container'>
                 <Map className='map' center={{lat: startAddress.lat, lng: startAddress.lng}} zoom={9}>
-                    <Marker key='1' position={{lat: startAddress.lat, lng: startAddress.lng}} />
-                    <Marker key='2' position={{lat: endAddress.lat, lng: endAddress.lng}} />
+                    <Marker position={{lat: startAddress.lat, lng: startAddress.lng}} />
+                    <Marker position={{lat: endAddress.lat, lng: endAddress.lng}} />
                 </Map>
             </div>
         </APIProvider>
