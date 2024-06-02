@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import './styles/AddressDisplay.css';
 import axios from 'axios'
 import AddressDisplayHelper from './AddressDisplayHelper';
+const DistanceFormat = require('../DistanceFormat')
 
 class AddressDisplay extends Component {
     constructor(props) {
@@ -20,6 +21,7 @@ class AddressDisplay extends Component {
         this.findEstablishment = this.findEstablishment.bind(this)
         this.addInput = this.addInput.bind(this)
         this.handleInputChange = this.handleInputChange.bind(this)
+        this.calculate = this.calculate.bind(this)
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -109,6 +111,14 @@ class AddressDisplay extends Component {
         console.log('update place from address display')
     };
 
+    calculate = () => {
+        console.log(2)
+		const test = new DistanceFormat(this.state.startAddress, this.state.endAddress, this.state.places)
+        console.log(3)
+		test.optimize()
+
+	}
+
     render() {
 
         const startAddress = this.props.startAddress
@@ -135,6 +145,7 @@ class AddressDisplay extends Component {
                 ))}
                 </div>
                 <button onClick={() => console.log(this.state.places)}>Reveal all locations</button>
+                <button onClick={this.calculate}>Calculate</button>
             </div>
         );
     }

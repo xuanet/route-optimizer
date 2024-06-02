@@ -46,17 +46,6 @@ function App() {
 
 	/////////////////
 
-	const handleUpdateStart = (newStart) => {
-		console.log('i have executed updatestart')
-		updateStart(newStart);
-		console.log(start)
-	};
-
-	const handleUpdateEnd = (newEnd) => {
-		updateEnd(newEnd);
-		console.log('i have executed updateend')
-		console.log(end)
-	};
 
 	const selectStart = (place) => {
 		if (place.geometry && place.geometry.location) {
@@ -139,9 +128,7 @@ function App() {
         return uniquePlaces;
     }
 
-	// const addAddress = () => {
-	// 	updateAddresses(prevArray => [...prevArray, {'id': prevArray.length + 1, 'address': selectedPlace.address}])
-	// }
+
 
 
 	//////////////
@@ -160,6 +147,7 @@ function App() {
 			<div id='place-search'>
 				<AddressDisplay startAddress={startAddress} endAddress={endAddress} apiKey={apiKeyMap} findEstablishment={findEstablishment} filterUniquePlaces={filterUniquePlaces}></AddressDisplay>
 			</div>
+			
 
 			{/* <button onClick={() => forceReload()}>Force reload</button> */}
 
