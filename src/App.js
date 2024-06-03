@@ -18,12 +18,6 @@ const apiKeyDistanceMatrix = 'AIzaSyA438rz5gimhiPCCyXYR64pG6813qJUnA8'
 
 function App() {
 
-	const forceReload = () => {
-		localStorage.clear()
-		window.location.reload()
-	}
-
-
 	const [start, updateStart] = useState({ lat: 35.791470, lng: -78.781143 });
 	const [end, updateEnd] = useState({ lat: 35.9940, lng: -78.8986 });
 
@@ -139,7 +133,7 @@ function App() {
 			<Header />
 			{/* <StartEnd start={start} end={end} updateStart={handleUpdateStart} updateEnd={handleUpdateEnd} /> */}
 			<SearchAddress apiKey={apiKeyAutocomplete} selectStart={selectStart} selectEnd={selectEnd}></SearchAddress>
-			<TestMap startAddress={startAddress} endAddress={endAddress} apiKey={apiKeyMap} />
+			{/* <TestMap startAddress={startAddress} endAddress={endAddress} apiKey={apiKeyMap} /> */}
 			{/* <TestMap startAddress={start} endAddress={end} /> */}
 			{/* <button onClick={() => addAddress()}>Add Address</button> */}
 			{/* <DistanceMatrix apiKey={apiKeyDistanceMatrix} />  */}
@@ -148,9 +142,6 @@ function App() {
 				<AddressDisplay startAddress={startAddress} endAddress={endAddress} apiKey={apiKeyMap} findEstablishment={findEstablishment} filterUniquePlaces={filterUniquePlaces}></AddressDisplay>
 			</div>
 			
-
-			{/* <button onClick={() => forceReload()}>Force reload</button> */}
-
 		</div>
 	);
 }

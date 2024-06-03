@@ -1,10 +1,11 @@
-const ax = require('axios')
+const axios = require('axios')
 
 class DistanceFormat {
-    constructor(start, end, places) {
+    constructor(start, end, places, axiosInstance) {
         this.start = start
         this.end = end
         this.places = places
+        this.axios = axiosInstance
 
         this.idMap = new Map()
         this.startMap = new Map()
@@ -48,6 +49,15 @@ class DistanceFormat {
 
         console.log(this.bestPathDistance)
         console.log(this.currBestDistance)
+
+        const a = this.id2Address(this.bestPathTime)
+        const b = this.id2Address(this.bestPathDistance)
+
+        console.log(a)
+        console.log(b)
+
+        console.log('done')
+        console.log(this.idMap)
     }
 
 
@@ -70,8 +80,8 @@ class DistanceFormat {
 
     async startEndMapify() {
         for (let i = 0; i<this.idMap.size; i++) {
-            let startMetrics = await this.fetchDistance(this.start, this.idMap.get(i).address)
-            let endMetrics = await this.fetchDistance(this.end, this.idMap.get(i).address)
+            let startMetrics = await this.fetchDistance(this.start.address, this.idMap.get(i).address)
+            let endMetrics = await this.fetchDistance(this.end.address, this.idMap.get(i).address)
             this.startMap.set(i, {travelTime: startMetrics.duration, distance: startMetrics.distance})
             this.endMap.set(i, {travelTime: endMetrics.duration, distance: endMetrics.distance})
         }
@@ -100,16 +110,17 @@ class DistanceFormat {
         let responseData = {distance: 0, duration: 0}
 
         let urlBase = 'https://maps.googleapis.com/maps/api/distancematrix/json'
-        let destinations = '?destinations=' + startAddress
-        let origins = '&origins=' + endAddress
+        let destinations = '?destinations=' + this.encodeAddress(startAddress)
+        let origins = '&origins=' + this.encodeAddress(endAddress)
         let units = '&units=metric'
         let apiKey = '&key=AIzaSyA438rz5gimhiPCCyXYR64pG6813qJUnA8'
 
         let url = urlBase + destinations + origins + units + apiKey
 
         return new Promise((resolve, reject) => {
-            ax.get(url)
+            this.axios.get(url)
             .then(response => {
+                console.log(response)
                 responseData = {distance: response.data.rows[0].elements[0].distance.value, duration: response.data.rows[0].elements[0].duration.value}
                 resolve(responseData)
             })
@@ -118,9 +129,9 @@ class DistanceFormat {
                 reject(error)
             });
         })
-
-
     }
+
+    encodeAddress = (address) => encodeURIComponent(address);
 
     backPropagateTime(currentId, visitedId, visitedTypes, currentPath, elapsedTime) {
         // elapsedTime >= bestTime
@@ -189,6 +200,10 @@ class DistanceFormat {
         })
 
         return
+    }
+
+    id2Address(path) {
+        return path.map(id => this.idMap.get(id).address)
     }
 }
 

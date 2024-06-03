@@ -113,7 +113,7 @@ class AddressDisplay extends Component {
 
     calculate = () => {
         console.log(2)
-		const test = new DistanceFormat(this.state.startAddress, this.state.endAddress, this.state.places)
+		const test = new DistanceFormat(this.state.startAddress, this.state.endAddress, this.state.places, axios)
         console.log(3)
 		test.optimize()
 
@@ -134,14 +134,6 @@ class AddressDisplay extends Component {
                 <div id='input-field-encompass'>
                 {this.state.places.map((input, index) => (
                     <AddressDisplayHelper id='input-field' position={index} updatePlace={this.updatePlace} places={places[index]} startAddress={startAddress} endAddress={endAddress} apiKey={apiKey}/>
-                    // <input
-                    //     key={index}
-                    //     type="text"
-                    //     value={input}
-                    //     onChange={(event) => this.handleInputChange(index, event)}
-                    //     placeholder={`Input ${index + 1}`}
-                    // />
-                    
                 ))}
                 </div>
                 <button onClick={() => console.log(this.state.places)}>Reveal all locations</button>
