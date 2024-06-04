@@ -1,6 +1,7 @@
 import React, { Component } from 'react'
-import { LoadScript, Autocomplete } from '@react-google-maps/api';
+import { Autocomplete } from '@react-google-maps/api';
 import axios from 'axios'
+import './styles/AddressDisplayHelperStyles.css'
 
 export class AddressDisplayHelper extends Component {
 
@@ -27,9 +28,10 @@ export class AddressDisplayHelper extends Component {
         this.handleLoadScriptSuccess = this.handleLoadScriptSuccess.bind(this)
         this.setApiState = this.setApiState.bind(this)
         this.handleLoadStart = this.handleLoadStart.bind(this)
-    }   
+        this.addAddress = this.addAddress.bind(this)
+    }
 
-    
+
 
     changeHandler = (e) => {
         const value = e.target.value
@@ -38,45 +40,74 @@ export class AddressDisplayHelper extends Component {
         })
     };
 
-    findEstablishment = () => {
+    findEstablishment = async () => {
+
+
 
         const startAddress = this.props.startAddress
+        const endAddress = this.props.endAddress
         const keyword = this.state.keyword
         const apiKey = this.state.apiKey
         // Define the parameters for the Nearby Search request
-        const params = {
+        let params = {
             location: `${startAddress.lat},${startAddress.lng}`,
-            // radius: '10000',
+            // radius: '20000',
             rankby: 'distance',
             keyword: `${keyword}`, // e.g., 'restaurant', 'supermarket', etc.
             key: `${apiKey}`
         };
 
+        let matches = []
+
         // Make the Nearby Search request
         const url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
 
-        axios.get(url, { params })
+        await axios.get(url, { params })
             .then(response => {
                 // Process the results
                 const places = response.data.results;
-                const uniquePlaces = this.filterUniquePlaces(places);
-                this.setState({
-                    places: uniquePlaces,
-                    keyword: ''
-                })
-                console.log(this.state.places)
+                const reducedPlaces = places.slice(0, Math.min(places.length, 10))
+                matches.push(...reducedPlaces)
+                console.log('start near length', reducedPlaces.length)
             })
             .catch(error => {
                 console.error('Error:', error);
-            });
+            })
+
+        // variable names must be params for API
+
+        params = {
+            location: `${endAddress.lat},${endAddress.lng}`,
+            // radius: '20000',
+            rankby: 'distance',
+            keyword: `${keyword}`, // e.g., 'restaurant', 'supermarket', etc.
+            key: `${apiKey}`
+        };
+
+        await axios.get(url, { params })
+            .then(response => {
+                // Process the results
+                const places = response.data.results;
+                const reducedPlaces = places.slice(0, Math.min(places.length, 10))
+                matches.push(...reducedPlaces)
+                console.log('end near length', reducedPlaces.length)
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            })
+
+        const uniquePlaces = this.filterUniquePlaces(matches)
+        this.setState({
+            places: uniquePlaces
+        })
     }
 
     filterUniquePlaces = (places) => {
         const uniquePlaces = [];
         const seenAddresses = new Set();
+        let dupes = 0
 
         places.forEach(place => {
-            console.log(place)
             const address = place.vicinity;
             if (address.split(' ').length > 1) {
                 if (!seenAddresses.has(address)) {
@@ -87,10 +118,11 @@ export class AddressDisplayHelper extends Component {
                     });
                     seenAddresses.add(address);
                 }
+                else dupes++
             }
         });
-
-        return uniquePlaces.slice(0, Math.min(uniquePlaces.length, 10));
+        console.log('dupes', dupes)
+        return uniquePlaces.slice(0, Math.min(uniquePlaces.length, 20));
     }
 
     handleAddressChange = () => {
@@ -113,18 +145,31 @@ export class AddressDisplayHelper extends Component {
         this.setState({ googleMapsLoaded: true });
     };
 
-    handleStartChanged = () => {
-        // Handle start address change
-    };
-
-    handleLoadStart() {
-        console.log('search bar started')
+    handleLoadStart(autocompleteInstance) {
+        this.autocomplete = autocompleteInstance;
+        this.autocomplete.setTypes(['address']); // Restrict to address types and establishment
+        console.log('autocomplete start loaded')
     }
 
     setApiState = () => {
         this.setState({
             apiKey: 'AIzaSyBSxhXCH1UBbtgc9CmobRec-gRLt_MHb1Q'
         })
+    }
+
+    addAddress = () => {
+        if (this.autocomplete) {
+            const place = this.autocomplete.getPlace()
+            const tempPlace = this.state.places
+            tempPlace.push({
+                name: place.name,
+                address: place.formatted_address,
+                location: place.geometry.location
+            })
+            this.setState({
+                places: tempPlace,
+            })
+        }
     }
 
 
@@ -139,44 +184,46 @@ export class AddressDisplayHelper extends Component {
 
         return (
             <React.Fragment>
-                <input
-                    type="text"
-                    name="keyword"
-                    value={keyword}
-                    onChange={this.changeHandler}
-                />
-                <button onClick={this.findEstablishment}>Find establishment</button>
+
+                <div id='combined'>
+
+                    <div id='find-establishment-container'>
+                        <input
+                            type="text"
+                            name="keyword"
+                            value={keyword}
+                            onChange={this.changeHandler}
+                            placeholder="Enter keyword..."
+                        />
+                        <button id='find-establishment-button' onClick={this.findEstablishment}>Find establishment</button>
+                    </div>
+
+                    <div id='autocomplete-search'>
+                        <Autocomplete onLoad={this.handleLoadStart}>
+                            <input
+                                type="text"
+                                ref={this.inputRefStart}
+                                placeholder="Enter new address..."
+                            />
+                        </Autocomplete>
+                        <button id='add-address-button' onClick={this.addAddress}>Add address</button>
+                        <button id='confirm-button' onClick={this.handleAddressChange}>Confirm</button>
+                    </div>
+
+                </div>
+
                 <div id='address-display'>
-                    Places:
                     {places.length
-                        ? places.map((place, index) => <div><p>{place.name}</p><button id={index} onClick={this.deleteAddress}>{place.address}</button></div>)
+                        ? places.map((place, index) => <div>
+                            <p>{place.name}</p>
+                            <button key={index} id={index} onClick={this.deleteAddress}>{place.address}</button>
+                        </div>)
                         : null}
                 </div>
-                <button onClick={this.handleAddressChange}>Confirm</button>
 
 
-                <LoadScript
-                    googleMapsApiKey={apiKey}
-                    libraries={libraries}
-                    onLoad={this.handleLoadScriptSuccess}
-                >
-                    {this.state.googleMapsLoaded ? (
-                        <div id='autocomplete-box'>
-                            <label>Start</label>
-                            <Autocomplete libraries={libraries} onLoad={this.handleLoadStart}>
-                                <input
-                                    type="text"
-                                    ref={this.inputRefStart}
-                                    placeholder="Search start address..."
-                                />
-                            </Autocomplete>
-                            <button onClick={this.handleStartChanged}>Update Start</button>
-                        </div>
-                    ) : (
-                        <div>Loading...</div>
-                    )}
-                </LoadScript>
-                <button onClick={this.setApiState}>Refresh autocomplete</button>
+
+
             </React.Fragment>
         )
     }

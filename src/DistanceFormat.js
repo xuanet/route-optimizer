@@ -1,5 +1,3 @@
-const axios = require('axios')
-
 class DistanceFormat {
     constructor(start, end, places, axiosInstance) {
         this.start = start
@@ -13,21 +11,21 @@ class DistanceFormat {
         this.placeMap = new Map()
         this.numTypes = places.length
 
+
+        this.numPathsTimeChecked = 0
         this.currBestTime = Number.MAX_SAFE_INTEGER
         this.bestPathTime = []
+        this.bestPathTimeAddresses = []
 
+        this.numPathsDistanceChecked = 0
         this.currBestDistance = Number.MAX_SAFE_INTEGER
         this.bestPathDistance = []
-    }
-
-    printPlace() {
-        console.log('inside df', this.start)
+        this.bestPathDistanceAddresses = []
     }
 
     async optimize() {
         // create id map
         this.assignId()
-        console.log(this.idMap)
         
         // create distance from start and end
         await this.startEndMapify()
@@ -40,24 +38,16 @@ class DistanceFormat {
             this.backPropagateTime(id, new Set([id]), new Set([this.idMap.get(id).type]), [id], this.startMap.get(id).travelTime)
         }
         
-        console.log(this.bestPathTime)
-        console.log(this.currBestTime)
+        console.log('optimal time path found')
 
         for (let id of this.startMap.keys()) {
             this.backPropagateDistance(id, new Set([id]), new Set([this.idMap.get(id).type]), [id], this.startMap.get(id).distance)
         }
 
-        console.log(this.bestPathDistance)
-        console.log(this.currBestDistance)
+        console.log('optimal distance path found')
 
-        const a = this.id2Address(this.bestPathTime)
-        const b = this.id2Address(this.bestPathDistance)
-
-        console.log(a)
-        console.log(b)
-
-        console.log('done')
-        console.log(this.idMap)
+        this.bestPathTimeAddresses = this.id2Address(this.bestPathTime)
+        this.bestPathDistanceAddresses = this.id2Address(this.bestPathDistance)
     }
 
 
@@ -66,14 +56,12 @@ class DistanceFormat {
 
     assignId() {
         let idCounter = 0
-        let typeCounter = 0
         for (let i = 0; i<this.places.length; i++) {
             let currType = this.places[i]
             for (let j = 0; j<currType.length; j++) {
-                this.idMap.set(idCounter, {name: currType[j].name, address: currType[j].address, type: typeCounter})
+                this.idMap.set(idCounter, {name: currType[j].name, address: currType[j].address, type: i})
                 idCounter++
             }
-            typeCounter++
         }
 
     }
@@ -120,7 +108,6 @@ class DistanceFormat {
         return new Promise((resolve, reject) => {
             this.axios.get(url)
             .then(response => {
-                console.log(response)
                 responseData = {distance: response.data.rows[0].elements[0].distance.value, duration: response.data.rows[0].elements[0].duration.value}
                 resolve(responseData)
             })
@@ -134,6 +121,7 @@ class DistanceFormat {
     encodeAddress = (address) => encodeURIComponent(address);
 
     backPropagateTime(currentId, visitedId, visitedTypes, currentPath, elapsedTime) {
+        this.numPathsTimeChecked++
         // elapsedTime >= bestTime
         if (elapsedTime >= this.currBestTime) return
         // visited all types, must go to end
@@ -149,7 +137,7 @@ class DistanceFormat {
         let nextStops = this.placeMap.get(currentId)
         nextStops.forEach((place) => {
             // can't be type already visited, can't be id already visited
-            if (!visitedTypes.has(place.type) || !visitedId.has(place.id)) {
+            if (!visitedTypes.has(place.type) && !visitedId.has(place.id)) {
                 visitedId.add(place.id)
                 visitedTypes.add(place.type)
                 currentPath.push(place.id)
@@ -169,6 +157,7 @@ class DistanceFormat {
 
 
     backPropagateDistance(currentId, visitedId, visitedTypes, currentPath, elapsedDistance) {
+        this.numPathsDistanceChecked++
         // elapsedTime >= bestDist
         if (elapsedDistance >= this.currBestDistance) return
         // visited all types, must go to end
@@ -184,7 +173,7 @@ class DistanceFormat {
         let nextStops = this.placeMap.get(currentId)
         nextStops.forEach((place) => {
             // can't be type already visited, can't be id already visited
-            if (!visitedTypes.has(place.type) || !visitedId.has(place.id)) {
+            if (!visitedTypes.has(place.type) && !visitedId.has(place.id)) {
                 visitedId.add(place.id)
                 visitedTypes.add(place.type)
                 currentPath.push(place.id)
@@ -209,10 +198,10 @@ class DistanceFormat {
 
 module.exports = DistanceFormat;
 
-let fakePlaces = [[{name: 'my house', address: '201 William Henry Way, Cary'}, {name: 'high school', address: '2500 Carpenter Upchurch Rd, Cary'}, {name: 'middel school', address: '2101 Davis Dr, Cary'}],
-[{name: 'gyno', address: '6102 Grace Park Dr, Morrisville'}, {name: 'library', address: '4000 Louis Stephens Dr, Cary'}, {name: 'food lion', address: '8745 Holly Springs Rd, Apex'}]]
+// let fakePlaces = [[{name: 'my house', address: '201 William Henry Way, Cary'}, {name: 'high school', address: '2500 Carpenter Upchurch Rd, Cary'}, {name: 'middel school', address: '2101 Davis Dr, Cary'}],
+// [{name: 'gyno', address: '6102 Grace Park Dr, Morrisville'}, {name: 'library', address: '4000 Louis Stephens Dr, Cary'}, {name: 'food lion', address: '8745 Holly Springs Rd, Apex'}]]
 
-const test = new DistanceFormat('2100 Morrisville Pkwy, Cary', '6770 McCrimmon Pkwy, Cary', fakePlaces)
+// const test = new DistanceFormat('2100 Morrisville Pkwy, Cary', '6770 McCrimmon Pkwy, Cary', fakePlaces)
 
 
 // async function asyncDistance(DistanceFormatInstance) {
@@ -220,7 +209,7 @@ const test = new DistanceFormat('2100 Morrisville Pkwy, Cary', '6770 McCrimmon P
 //     console.log(k)
 // }
 
-test.optimize()
+// test.optimize()
 
 // let k = test.fetchDistance('201 William Henry Way, Cary', '2500 Carpenter Upchurch Rd, Cary')
 // .then(response => {

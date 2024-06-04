@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { LoadScript, Autocomplete } from '@react-google-maps/api';
+import { Autocomplete } from '@react-google-maps/api';
 import './styles/SearchAddressStyles.css'
 
 const libraries = ['places'];
@@ -23,13 +23,11 @@ class SearchAddress extends Component {
     handleLoadStart = (autocompleteInstance) => {
         this.autocompleteStart = autocompleteInstance;
         this.autocompleteStart.setTypes(['address']); // Restrict to address types and establishment
-        console.log('autocomplete start loaded')
     };
 
     handleLoadEnd = (autocompleteInstance) => {
         this.autocompleteEnd = autocompleteInstance;
         this.autocompleteEnd.setTypes(['address']); // Restrict to address types and establishment
-        console.log('autocomplete end loaded')
     };
 
 
@@ -57,8 +55,6 @@ class SearchAddress extends Component {
         const apiKey = this.props.apiKey;
         return (
             <React.Fragment>
-                <p>1. Choose start and end</p>
-                <LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
                     <div id='autocomplete-box'>
                         <label>Start</label>
                         <Autocomplete libraries={libraries} onLoad={this.handleLoadStart}>
@@ -81,7 +77,6 @@ class SearchAddress extends Component {
                         </Autocomplete>
                         <button onClick={this.handleEndChanged}>Update End</button>
                     </div>
-                </LoadScript>
             </React.Fragment>
         );
     }
