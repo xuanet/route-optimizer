@@ -13,6 +13,7 @@ import axios from 'axios'
 import './components/styles/TestMapStyles.css'
 
 import { LoadScript, Autocomplete } from '@react-google-maps/api';
+import StartEndAddressDisplay from './components/StartEndAddressDisplay';
 
 const apiKeyMap = 'AIzaSyBSxhXCH1UBbtgc9CmobRec-gRLt_MHb1Q'
 const apiKeyAutocomplete = 'AIzaSyCk8Y40ZcvbAnqIQKmBuxDn66JwCJM8sTU'
@@ -22,8 +23,8 @@ const libraries = ['places'];
 function App() {
 
 	// current lng lat wrong
-	const [startAddress, setStartAddress] = useState({ address: '201 William Henry Way', lat: 35.791470, lng: -78.781143 });
-	const [endAddress, setEndAddress] = useState({ address: '106 Haley House Lane', lat: 0, lng: 0 });
+	const [startAddress, setStartAddress] = useState({ address: 'Unset', lat: 0, lng: 0 });
+	const [endAddress, setEndAddress] = useState({ address: 'Unset', lat: 0, lng: 0 });
 
 	useEffect(() => {
 		console.log('startAddress: ', startAddress)
@@ -137,6 +138,7 @@ function App() {
 				<Header />
 				{/* <StartEnd start={start} end={end} updateStart={handleUpdateStart} updateEnd={handleUpdateEnd} /> */}
 				<SearchAddress apiKey={apiKeyAutocomplete} selectStart={selectStart} selectEnd={selectEnd}></SearchAddress>
+				<StartEndAddressDisplay startAddress={startAddress} endAddress={endAddress}></StartEndAddressDisplay>
 				{/* <TestMap startAddress={startAddress} endAddress={endAddress} apiKey={apiKeyMap} /> */}
 				{/* <TestMap startAddress={start} endAddress={end} /> */}
 				{/* <button onClick={() => addAddress()}>Add Address</button> */}

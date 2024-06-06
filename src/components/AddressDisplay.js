@@ -33,6 +33,7 @@ class AddressDisplay extends Component {
         this.handleInputChange = this.handleInputChange.bind(this)
         this.calculate = this.calculate.bind(this)
         this.formatGoogleMapsRoute = this.formatGoogleMapsRoute.bind(this)
+        this.validateStartEndAddress = this.validateStartEndAddress.bind(this)
     }
 
     addInput = () => {
@@ -70,8 +71,38 @@ class AddressDisplay extends Component {
         console.log('update place from address display')
     };
 
+    validateStartEndAddress = (startAddress, endAddress) => {
+        return ((startAddress.lat === 0 && startAddress.lng === 0) || (endAddress.lat === 0 && endAddress.lng === 0)) ? false : true
+    }
+
     calculate = async () => {
-        const optimalPaths = new DistanceFormat(this.state.startAddress, this.state.endAddress, this.state.places, axios)
+
+        if (!this.validateStartEndAddress(this.props.startAddress, this.props.endAddress)) {
+            alert('Please set start and end address')
+            return
+        }
+
+        if (this.state.places.length === 0) {
+            // no intermediates
+            alert('Please include at least 1 intermediate location')
+            return
+        }
+
+
+        let emptyPlaces = []
+
+        for (let i = 0; i<this.state.places.length; i++) {
+            if (this.state.places[i].length === 0) {
+                emptyPlaces.push(i+1)
+            }
+        }
+
+        if (emptyPlaces.length > 0) {
+            alert(`Inputs ${emptyPlaces.join(', ')} are empty or not confirmed`);
+        }
+
+
+        const optimalPaths = new DistanceFormat(this.props.startAddress, this.props.endAddress, this.state.places, axios)
         await optimalPaths.optimize()
         const timePath = optimalPaths.bestPathTimeAddresses
         const distPath = optimalPaths.bestPathDistanceAddresses
@@ -86,6 +117,19 @@ class AddressDisplay extends Component {
                 bestPathDistanceLink: distLink
             })
         })
+
+        console.log(optimalPaths.startMap)
+        console.log(optimalPaths.endMap)
+        console.log('time paths checked', optimalPaths.numPathsTimeChecked)
+        console.log('dist paths checked', optimalPaths.numPathsDistanceChecked)
+
+
+
+
+        console.log(optimalPaths.idMap)
+        console.log(optimalPaths.placeMap)
+        console.log(optimalPaths.bestPathTime)
+        console.log(optimalPaths.currBestTime)
 
 
     }
@@ -109,7 +153,7 @@ class AddressDisplay extends Component {
         const route = formattedAddresses.join('/');
 
         // Combine the base URL with the formatted route
-        return baseURL + route;
+        return `${baseURL}${route}/@?avoid=t`
     }
 
 

@@ -67,6 +67,8 @@ class DistanceFormat {
     }
 
     async startEndMapify() {
+        console.log(this.start.address)
+        console.log(this.end.address)
         for (let i = 0; i<this.idMap.size; i++) {
             let startMetrics = await this.fetchDistance(this.start.address, this.idMap.get(i).address)
             let endMetrics = await this.fetchDistance(this.end.address, this.idMap.get(i).address)
@@ -101,9 +103,11 @@ class DistanceFormat {
         let destinations = '?destinations=' + this.encodeAddress(startAddress)
         let origins = '&origins=' + this.encodeAddress(endAddress)
         let units = '&units=metric'
+        let avoid = '&avoid=tolls'; // Add this line to avoid tolls
+        let departureTime = '&departure_time=now'; // Use 'now' or a Unix timestamp in seconds
         let apiKey = '&key=AIzaSyA438rz5gimhiPCCyXYR64pG6813qJUnA8'
 
-        let url = urlBase + destinations + origins + units + apiKey
+        let url = urlBase + destinations + origins + units + avoid + departureTime + apiKey
 
         return new Promise((resolve, reject) => {
             this.axios.get(url)
@@ -123,7 +127,9 @@ class DistanceFormat {
     backPropagateTime(currentId, visitedId, visitedTypes, currentPath, elapsedTime) {
         this.numPathsTimeChecked++
         // elapsedTime >= bestTime
-        if (elapsedTime >= this.currBestTime) return
+        if (elapsedTime >= this.currBestTime) {
+            return
+        }
         // visited all types, must go to end
         if (visitedTypes.size === this.numTypes) {
             if (this.endMap.get(currentId).travelTime + elapsedTime < this.currBestTime) {
@@ -197,39 +203,3 @@ class DistanceFormat {
 }
 
 module.exports = DistanceFormat;
-
-// let fakePlaces = [[{name: 'my house', address: '201 William Henry Way, Cary'}, {name: 'high school', address: '2500 Carpenter Upchurch Rd, Cary'}, {name: 'middel school', address: '2101 Davis Dr, Cary'}],
-// [{name: 'gyno', address: '6102 Grace Park Dr, Morrisville'}, {name: 'library', address: '4000 Louis Stephens Dr, Cary'}, {name: 'food lion', address: '8745 Holly Springs Rd, Apex'}]]
-
-// const test = new DistanceFormat('2100 Morrisville Pkwy, Cary', '6770 McCrimmon Pkwy, Cary', fakePlaces)
-
-
-// async function asyncDistance(DistanceFormatInstance) {
-//     let k = await DistanceFormatInstance.fetchDistance('201 William Henry Way, Cary', '2500 Carpenter Upchurch Rd, Cary')
-//     console.log(k)
-// }
-
-// test.optimize()
-
-// let k = test.fetchDistance('201 William Henry Way, Cary', '2500 Carpenter Upchurch Rd, Cary')
-// .then(response => {
-//     console.log(response)
-// })
-// .catch(error => {
-//     console.log(error)
-// })
-
-// asyncDistance(test)
-// console.log(asyncDistance(test))
-
-// (async () => {
-//     try {
-//         const response = await test.fetchDistance('201 William Henry Way, Cary', '2500 Carpenter Upchurch Rd, Cary');
-//         console.log(response);
-//     } catch (error) {
-//         console.error(error);
-//     }
-// })();
-
-
-// export default DistanceFormat

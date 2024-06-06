@@ -29,6 +29,7 @@ export class AddressDisplayHelper extends Component {
         this.setApiState = this.setApiState.bind(this)
         this.handleLoadStart = this.handleLoadStart.bind(this)
         this.addAddress = this.addAddress.bind(this)
+        this.validateStartEndAddress = this.validateStartEndAddress.bind(this)
     }
 
 
@@ -40,12 +41,21 @@ export class AddressDisplayHelper extends Component {
         })
     };
 
-    findEstablishment = async () => {
+    validateStartEndAddress = (startAddress, endAddress) => {
+        return ((startAddress.lat === 0 && startAddress.lng === 0) || (endAddress.lat === 0 && endAddress.lng === 0)) ? false : true
+    }
 
+    findEstablishment = async () => {
 
 
         const startAddress = this.props.startAddress
         const endAddress = this.props.endAddress
+
+        if (!this.validateStartEndAddress(startAddress, endAddress)) {
+            alert('Please set start and end address')
+            return
+        }
+
         const keyword = this.state.keyword
         const apiKey = this.state.apiKey
         // Define the parameters for the Nearby Search request
@@ -128,6 +138,12 @@ export class AddressDisplayHelper extends Component {
     handleAddressChange = () => {
         const position = this.state.position
         const places = this.state.places
+
+        if (places.length === 0) {
+            alert("Please include at least 1 location or remove input")
+            return
+        }
+
         this.props.updatePlace(position, places);
     };
 
