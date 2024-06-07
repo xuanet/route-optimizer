@@ -45,9 +45,28 @@ export class AddressDisplayHelper extends Component {
         return ((startAddress.lat === 0 && startAddress.lng === 0) || (endAddress.lat === 0 && endAddress.lng === 0)) ? false : true
     }
 
+    fetchPlaces = (startAddress, endAddress, keyword, apiKey) => {
+        const url = '/fetch_places'
+
+        let params = {
+            startAddress: startAddress,
+            endAddress: endAddress,
+            keyword: keyword,
+            apiKey: apiKey
+        };
+
+        return new Promise((resolve, reject) => {
+            axios.post(url, params)
+            .then(response => {
+                resolve(response)
+            })
+            .catch(error => {
+                reject(error)
+            })
+        })
+    }
+
     findEstablishment = async () => {
-
-
         const startAddress = this.props.startAddress
         const endAddress = this.props.endAddress
 
@@ -58,82 +77,16 @@ export class AddressDisplayHelper extends Component {
 
         const keyword = this.state.keyword
         const apiKey = this.state.apiKey
-        // Define the parameters for the Nearby Search request
-        let params = {
-            location: `${startAddress.lat},${startAddress.lng}`,
-            // radius: '20000',
-            rankby: 'distance',
-            keyword: `${keyword}`, // e.g., 'restaurant', 'supermarket', etc.
-            key: `${apiKey}`
-        };
 
-        let matches = []
-
-        // Make the Nearby Search request
-        const url = 'https://maps.googleapis.com/maps/api/place/nearbysearch/json';
-
-        await axios.get(url, { params })
-            .then(response => {
-                // Process the results
-                const places = response.data.results;
-                const reducedPlaces = places.slice(0, Math.min(places.length, 10))
-                matches.push(...reducedPlaces)
-                console.log('start near length', reducedPlaces.length)
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            })
-
-        // variable names must be params for API
-
-        params = {
-            location: `${endAddress.lat},${endAddress.lng}`,
-            // radius: '20000',
-            rankby: 'distance',
-            keyword: `${keyword}`, // e.g., 'restaurant', 'supermarket', etc.
-            key: `${apiKey}`
-        };
-
-        await axios.get(url, { params })
-            .then(response => {
-                // Process the results
-                const places = response.data.results;
-                const reducedPlaces = places.slice(0, Math.min(places.length, 10))
-                matches.push(...reducedPlaces)
-                console.log('end near length', reducedPlaces.length)
-            })
-            .catch(error => {
-                console.error('Error:', error);
-            })
-
-        const uniquePlaces = this.filterUniquePlaces(matches)
+        // make api request
+        let foundPlaces = await this.fetchPlaces(startAddress, endAddress, keyword, apiKey)
+        console.log(foundPlaces)
+      
         this.setState({
-            places: uniquePlaces
+            places: foundPlaces.data
         })
     }
 
-    filterUniquePlaces = (places) => {
-        const uniquePlaces = [];
-        const seenAddresses = new Set();
-        let dupes = 0
-
-        places.forEach(place => {
-            const address = place.vicinity;
-            if (address.split(' ').length > 1) {
-                if (!seenAddresses.has(address)) {
-                    uniquePlaces.push({
-                        name: place.name,
-                        address: address,
-                        location: place.geometry.location
-                    });
-                    seenAddresses.add(address);
-                }
-                else dupes++
-            }
-        });
-        console.log('dupes', dupes)
-        return uniquePlaces.slice(0, Math.min(uniquePlaces.length, 20));
-    }
 
     handleAddressChange = () => {
         const position = this.state.position

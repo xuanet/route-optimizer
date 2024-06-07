@@ -2,8 +2,6 @@ import React, { Component } from 'react';
 import './styles/AddressDisplay.css';
 import axios from 'axios'
 import AddressDisplayHelper from './AddressDisplayHelper';
-// const DistanceFormat = require('../DistanceFormat')
-import DistanceFormat from '../DistanceFormat';
 
 class AddressDisplay extends Component {
     constructor(props) {
@@ -21,7 +19,9 @@ class AddressDisplay extends Component {
             bestPathDistance: [],
 
             bestPathTimeLink: '',
-            bestPathDistanceLink: ''
+            bestPathDistanceLink: '',
+
+            calculateStatus: 'no-status'
         }
 
 
@@ -34,6 +34,14 @@ class AddressDisplay extends Component {
         this.calculate = this.calculate.bind(this)
         this.formatGoogleMapsRoute = this.formatGoogleMapsRoute.bind(this)
         this.validateStartEndAddress = this.validateStartEndAddress.bind(this)
+    }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.places !== this.state.places) {
+            this.setState({
+                calculateStatus: 'no-status'
+            })
+        }
     }
 
     addInput = () => {
@@ -76,62 +84,79 @@ class AddressDisplay extends Component {
     }
 
     calculate = async () => {
-
         if (!this.validateStartEndAddress(this.props.startAddress, this.props.endAddress)) {
             alert('Please set start and end address')
             return
         }
-
         if (this.state.places.length === 0) {
             // no intermediates
             alert('Please include at least 1 intermediate location')
             return
         }
-
-
         let emptyPlaces = []
-
-        for (let i = 0; i<this.state.places.length; i++) {
+        for (let i = 0; i < this.state.places.length; i++) {
             if (this.state.places[i].length === 0) {
-                emptyPlaces.push(i+1)
+                emptyPlaces.push(i + 1)
             }
         }
-
         if (emptyPlaces.length > 0) {
             alert(`Inputs ${emptyPlaces.join(', ')} are empty or not confirmed`);
+            return
+        }
+
+        // more than 25 intermediates
+        const totalIntermediates = this.state.places.reduce((acc, innerList) => acc + innerList.length, 0);
+        if (totalIntermediates >= 25) {
+            alert('Please choose no more than 25 intermediates')
+            return
         }
 
 
-        const optimalPaths = new DistanceFormat(this.props.startAddress, this.props.endAddress, this.state.places, axios)
-        await optimalPaths.optimize()
-        const timePath = optimalPaths.bestPathTimeAddresses
-        const distPath = optimalPaths.bestPathDistanceAddresses
+        // style calculate button
         this.setState({
-            bestPathTime: timePath,
-            bestPathDistance: distPath
-        }, () => {
-            const timeLink = this.formatGoogleMapsRoute(this.state.bestPathTime)
-            const distLink = this.formatGoogleMapsRoute(this.state.bestPathDistance)
-            this.setState({
-                bestPathTimeLink: timeLink,
-                bestPathDistanceLink: distLink
-            })
+            calculateStatus: 'calculate-button-calculating'
         })
 
-        console.log(optimalPaths.startMap)
-        console.log(optimalPaths.endMap)
-        console.log('time paths checked', optimalPaths.numPathsTimeChecked)
-        console.log('dist paths checked', optimalPaths.numPathsDistanceChecked)
+        // make api request
+        let optimalPaths = await this.fetchOptimalPaths(this.props.startAddress, this.props.endAddress, this.state.places)
 
+        this.setState({
+            bestPathTime: optimalPaths.data.optimalPathTime,
+            bestPathDistance: optimalPaths.data.optimalPathDistance
+        }, () => {
+            console.log(this.state.bestPathDistance)
+            console.log(typeof(this.state.bestPathDistance))
+            console.log(this.state.bestPathDistance.length)
+            const timeLink = this.formatGoogleMapsRoute(this.state.bestPathTime)
+            console.log(timeLink)
+            
+            const distLink = this.formatGoogleMapsRoute(this.state.bestPathDistance)
+            console.log(distLink)
+            this.setState({
+                bestPathTimeLink: timeLink,
+                bestPathDistanceLink: distLink,
+                calculateStatus: 'calculate-button-done'
+            })
+        })
+    }
 
+    fetchOptimalPaths = (startAddress, endAddress, places) => {
+        const url = '/optimal_path'
 
-
-        console.log(optimalPaths.idMap)
-        console.log(optimalPaths.placeMap)
-        console.log(optimalPaths.bestPathTime)
-        console.log(optimalPaths.currBestTime)
-
-
+        let params = {
+            startAddress: startAddress,
+            endAddress: endAddress,
+            places: places
+        }
+        return new Promise((resolve, reject) => {
+            axios.post(url, params)
+            .then(response => {
+                resolve(response)
+            })
+            .catch(error => {
+                reject(error)
+            })
+        })
     }
 
     formatGoogleMapsRoute = (addresses) => {
@@ -170,8 +195,8 @@ class AddressDisplay extends Component {
                 <div id='buttons-container'>
                     <button onClick={this.addInput}>Add Input</button>
                     <button onClick={this.removeInput}>Remove Input</button>
-                    <button onClick={() => console.log(this.state.places)}>Reveal all locations</button>
-                    <button onClick={this.calculate}>Calculate</button>
+                    {/* <button onClick={() => console.log(this.state.places)}>Reveal all locations</button> */}
+                    <button id={this.state.calculateStatus} onClick={this.calculate}>Calculate</button>
 
                     <a href={this.state.bestPathTimeLink} target="_blank" rel="noopener noreferrer">
                         Best Time
@@ -179,7 +204,7 @@ class AddressDisplay extends Component {
                     <a href={this.state.bestPathDistanceLink} target="_blank" rel="noopener noreferrer">
                         Best Distance
                     </a>
-                
+
 
                 </div>
 

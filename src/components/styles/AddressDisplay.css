@@ -20,13 +20,6 @@
     /* border: 10px solid #000 */
 }
 
-/* #input-field-encompass .input-field {
-    border: 10px solid #000
-}
-.input-field {
-    border: 10px solid #000
-} */
-
 #buttons-container {
     display: flex;
     justify-content: flex-start;
@@ -35,6 +28,14 @@
 
 #buttons-container button {
     height: 30px
+}
+
+#calculate-button-calculating {
+    background-color: red
+}
+
+#calculate-button-done {
+    background-color: lightgreen;
 }
 
 #buttons-container a {
