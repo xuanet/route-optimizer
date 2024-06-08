@@ -101,9 +101,10 @@ app.post('/optimal_path', async (req, res) => {
   const startAddress = req.body.startAddress
   const endAddress = req.body.endAddress
   const places = req.body.places
+  const avoidToll = req.body.avoidToll
 
   // create DistanceFormat object
-  let optimalPaths = new DistanceFormat(startAddress, endAddress, places)
+  let optimalPaths = new DistanceFormat(startAddress, endAddress, places, avoidToll)
   await optimalPaths.optimize()
 
   const optimalPathTime = optimalPaths.bestPathTime

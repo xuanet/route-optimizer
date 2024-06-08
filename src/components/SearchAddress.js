@@ -35,7 +35,12 @@ class SearchAddress extends Component {
     handleStartChanged = () => {
         if (this.autocompleteStart) {
             const place = this.autocompleteStart.getPlace();
-            this.props.selectStart(place);
+            try {
+                this.props.selectStart(place);
+            }
+            catch {
+                alert('Please enter valid start address')
+            }
         } else {
             console.log('Autocomplete start is not loaded yet!');
         }
@@ -44,7 +49,12 @@ class SearchAddress extends Component {
     handleEndChanged = () => {
         if (this.autocompleteEnd) {
             const place = this.autocompleteEnd.getPlace();
-            this.props.selectEnd(place);
+            try {
+                this.props.selectEnd(place);
+            }
+            catch {
+                alert('Please enter valid end address')
+            }
         } else {
             console.log('Autocomplete end is not loaded yet!');
         }
@@ -56,23 +66,22 @@ class SearchAddress extends Component {
         return (
             <React.Fragment>
                     <div id='autocomplete-box'>
-                        <label>Start</label>
                         <Autocomplete libraries={libraries} onLoad={this.handleLoadStart}>
                             <input
                                 type="text"
                                 ref={this.inputRefStart}
-                                placeholder="Search start address..."
+                                placeholder="Enter start address..."
                             />
                         </Autocomplete>
                         <button onClick={this.handleStartChanged}>Update Start</button>
                     </div>
+                    
                     <div id='autocomplete-box'>
-                        <label>End</label>
                         <Autocomplete libraries={libraries} onLoad={this.handleLoadEnd}>
                             <input
                                 type="text"
                                 ref={this.inputRefEnd}
-                                placeholder="Search end address..."
+                                placeholder="Enter end address..."
                             />
                         </Autocomplete>
                         <button onClick={this.handleEndChanged}>Update End</button>

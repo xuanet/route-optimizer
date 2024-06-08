@@ -1,11 +1,12 @@
 const axios = require('axios')
 
 class DistanceFormat {
-    constructor(start, end, places) {
+    constructor(start, end, places, avoidToll) {
 
         this.start = start
         this.end = end
         this.places = places
+        this.avoidToll = avoidToll
         this.flattenedPlaces = []
 
 
@@ -80,6 +81,8 @@ class DistanceFormat {
         }
 
         this.flattenedPlaces = this.places.flatMap(placeList => placeList.map(place => place.address))
+        this.flattenedPlacesNames = this.places.flatMap(placeList =>
+        placeList.map(place => place.name))
     }
 
     async startEndMapify() {
@@ -132,11 +135,11 @@ class DistanceFormat {
         const origins = 'origins=' + startAddresses.map(address => this.encodeAddress(address)).join('|');
         const destinations = 'destinations=' + endAddresses.map(address => this.encodeAddress(address)).join('|');
         const units = '&units=metric'
-        const avoid = '&avoid=tolls'; // Add this line to avoid tolls
+        const avoidToll = this.avoidToll ? '&avoid=tolls' : ''
         const departureTime = '&departure_time=now'; // Use 'now' or a Unix timestamp in seconds
         const apiKey = '&key=AIzaSyA438rz5gimhiPCCyXYR64pG6813qJUnA8'
 
-        const url = `${urlBase}?${origins}&${destinations}${units}${avoid}${departureTime}${apiKey}`;
+        const url = `${urlBase}?${origins}&${destinations}${units}${avoidToll}${departureTime}${apiKey}`;
 
         return new Promise((resolve, reject) => {
             axios.get(url)

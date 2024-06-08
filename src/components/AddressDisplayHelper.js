@@ -2,6 +2,7 @@ import React, { Component } from 'react'
 import { Autocomplete } from '@react-google-maps/api';
 import axios from 'axios'
 import './styles/AddressDisplayHelperStyles.css'
+import PAD from './PAD';
 
 export class AddressDisplayHelper extends Component {
 
@@ -57,12 +58,12 @@ export class AddressDisplayHelper extends Component {
 
         return new Promise((resolve, reject) => {
             axios.post(url, params)
-            .then(response => {
-                resolve(response)
-            })
-            .catch(error => {
-                reject(error)
-            })
+                .then(response => {
+                    resolve(response)
+                })
+                .catch(error => {
+                    reject(error)
+                })
         })
     }
 
@@ -81,9 +82,11 @@ export class AddressDisplayHelper extends Component {
         // make api request
         let foundPlaces = await this.fetchPlaces(startAddress, endAddress, keyword, apiKey)
         console.log(foundPlaces)
-      
+
         this.setState({
             places: foundPlaces.data
+        }, () => {
+            this.handleAddressChange()
         })
     }
 
@@ -92,10 +95,10 @@ export class AddressDisplayHelper extends Component {
         const position = this.state.position
         const places = this.state.places
 
-        if (places.length === 0) {
-            alert("Please include at least 1 location or remove input")
-            return
-        }
+        // if (places.length === 0) {
+        //     alert("Please include at least 1 location or remove input")
+        //     return
+        // }
 
         this.props.updatePlace(position, places);
     };
@@ -106,6 +109,8 @@ export class AddressDisplayHelper extends Component {
         updatedPlaces.splice(id, 1)
         this.setState({
             places: updatedPlaces
+        }, () => {
+            this.handleAddressChange()
         })
     }
 
@@ -137,6 +142,8 @@ export class AddressDisplayHelper extends Component {
             })
             this.setState({
                 places: tempPlace,
+            }, () => {
+                this.handleAddressChange()
             })
         }
     }
@@ -154,42 +161,36 @@ export class AddressDisplayHelper extends Component {
         return (
             <React.Fragment>
 
-                <div id='combined'>
+                <div id='all'>
 
-                    <div id='find-establishment-container'>
-                        <input
-                            type="text"
-                            name="keyword"
-                            value={keyword}
-                            onChange={this.changeHandler}
-                            placeholder="Enter keyword..."
-                        />
-                        <button id='find-establishment-button' onClick={this.findEstablishment}>Find establishment</button>
-                    </div>
+                    <div id='combined'>
 
-                    <div id='autocomplete-search'>
-                        <Autocomplete onLoad={this.handleLoadStart}>
+                        <div id='find-establishment-container'>
                             <input
                                 type="text"
-                                ref={this.inputRefStart}
-                                placeholder="Enter new address..."
+                                name="keyword"
+                                value={keyword}
+                                onChange={this.changeHandler}
+                                placeholder="Enter keyword..."
                             />
-                        </Autocomplete>
-                        <button id='add-address-button' onClick={this.addAddress}>Add address</button>
-                        <button id='confirm-button' onClick={this.handleAddressChange}>Confirm</button>
+                            <button id='find-establishment-button' onClick={this.findEstablishment}>Find establishment</button>
+                        </div>
+
+                        <div id='autocomplete-search'>
+                            <Autocomplete onLoad={this.handleLoadStart}>
+                                <input id='autocomplete-input'
+                                    type="text"
+                                    ref={this.inputRefStart}
+                                    placeholder="Enter new address..."
+                                />
+                            </Autocomplete>
+                            <button id='add-address-button' onClick={this.addAddress}>Add address</button>
+                            {/* <button id='confirm-button' onClick={this.handleAddressChange}>Confirm</button> */}
+                        </div>
+
                     </div>
-
+                    <PAD places={places} deleteAddress={this.deleteAddress}></PAD>
                 </div>
-
-                <div id='address-display'>
-                    {places.length
-                        ? places.map((place, index) => <div>
-                            <p>{place.name}</p>
-                            <button key={index} id={index} onClick={this.deleteAddress}>{place.address}</button>
-                        </div>)
-                        : null}
-                </div>
-
 
 
 

@@ -21,7 +21,8 @@ class AddressDisplay extends Component {
             bestPathTimeLink: '',
             bestPathDistanceLink: '',
 
-            calculateStatus: 'no-status'
+            calculateStatus: 'no-status',
+            avoidTollCheck: false
         }
 
 
@@ -34,6 +35,7 @@ class AddressDisplay extends Component {
         this.calculate = this.calculate.bind(this)
         this.formatGoogleMapsRoute = this.formatGoogleMapsRoute.bind(this)
         this.validateStartEndAddress = this.validateStartEndAddress.bind(this)
+        this.changeTollStatus = this.changeTollStatus.bind(this)
     }
 
     componentDidUpdate(prevProps, prevState) {
@@ -100,7 +102,7 @@ class AddressDisplay extends Component {
             }
         }
         if (emptyPlaces.length > 0) {
-            alert(`Inputs ${emptyPlaces.join(', ')} are empty or not confirmed`);
+            alert(`Input(s) ${emptyPlaces.join(', ')} are empty`);
             return
         }
 
@@ -118,18 +120,18 @@ class AddressDisplay extends Component {
         })
 
         // make api request
-        let optimalPaths = await this.fetchOptimalPaths(this.props.startAddress, this.props.endAddress, this.state.places)
+        let optimalPaths = await this.fetchOptimalPaths(this.props.startAddress, this.props.endAddress, this.state.places, this.state.avoidTollCheck)
 
         this.setState({
             bestPathTime: optimalPaths.data.optimalPathTime,
             bestPathDistance: optimalPaths.data.optimalPathDistance
         }, () => {
             console.log(this.state.bestPathDistance)
-            console.log(typeof(this.state.bestPathDistance))
+            console.log(typeof (this.state.bestPathDistance))
             console.log(this.state.bestPathDistance.length)
             const timeLink = this.formatGoogleMapsRoute(this.state.bestPathTime)
             console.log(timeLink)
-            
+
             const distLink = this.formatGoogleMapsRoute(this.state.bestPathDistance)
             console.log(distLink)
             this.setState({
@@ -140,22 +142,23 @@ class AddressDisplay extends Component {
         })
     }
 
-    fetchOptimalPaths = (startAddress, endAddress, places) => {
+    fetchOptimalPaths = (startAddress, endAddress, places, avoidToll) => {
         const url = '/optimal_path'
 
         let params = {
             startAddress: startAddress,
             endAddress: endAddress,
-            places: places
+            places: places,
+            avoidToll: avoidToll
         }
         return new Promise((resolve, reject) => {
             axios.post(url, params)
-            .then(response => {
-                resolve(response)
-            })
-            .catch(error => {
-                reject(error)
-            })
+                .then(response => {
+                    resolve(response)
+                })
+                .catch(error => {
+                    reject(error)
+                })
         })
     }
 
@@ -181,6 +184,12 @@ class AddressDisplay extends Component {
         return `${baseURL}${route}/@?avoid=t`
     }
 
+    changeTollStatus = (e) => {
+        this.setState({
+            avoidTollCheck: e.target.checked
+        });
+    }
+
 
     render() {
 
@@ -188,6 +197,7 @@ class AddressDisplay extends Component {
         const endAddress = this.props.endAddress
         const places = this.state.places
         const apiKey = this.state.apiKey
+        const avoidTollCheck = this.state.avoidTollCheck
 
         return (
 
@@ -195,18 +205,24 @@ class AddressDisplay extends Component {
                 <div id='buttons-container'>
                     <button onClick={this.addInput}>Add Input</button>
                     <button onClick={this.removeInput}>Remove Input</button>
-                    {/* <button onClick={() => console.log(this.state.places)}>Reveal all locations</button> */}
+                    <button onClick={() => console.log(this.state.places)}>Reveal all locations</button>
                     <button id={this.state.calculateStatus} onClick={this.calculate}>Calculate</button>
-
-                    <a href={this.state.bestPathTimeLink} target="_blank" rel="noopener noreferrer">
-                        Best Time
-                    </a>
-                    <a href={this.state.bestPathDistanceLink} target="_blank" rel="noopener noreferrer">
-                        Best Distance
-                    </a>
-
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={avoidTollCheck}
+                            onChange={this.changeTollStatus}
+                        />
+                        Avoid tolls
+                    </label>
 
                 </div>
+                <a href={this.state.bestPathTimeLink} target="_blank" rel="noopener noreferrer">
+                    Best Time
+                </a>
+                <a href={this.state.bestPathDistanceLink} target="_blank" rel="noopener noreferrer">
+                    Best Distance
+                </a>
 
                 <div id='input-field-encompass'>
                     {this.state.places.map((input, index) => (
