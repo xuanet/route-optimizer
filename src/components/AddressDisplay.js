@@ -17,6 +17,8 @@ class AddressDisplay extends Component {
 
             bestPathTime: [],
             bestPathDistance: [],
+            bestPathTimeNames: [],
+            bestPathDistanceNames: [],
 
             bestPathTimeLink: '',
             bestPathDistanceLink: '',
@@ -120,11 +122,31 @@ class AddressDisplay extends Component {
         })
 
         // make api request
-        let optimalPaths = await this.fetchOptimalPaths(this.props.startAddress, this.props.endAddress, this.state.places, this.state.avoidTollCheck)
+        let optimalPaths = ''
+        try {
+            optimalPaths = await this.fetchOptimalPaths(this.props.startAddress, this.props.endAddress, this.state.places, this.state.avoidTollCheck)
+        }
+        catch {
+            this.setState({
+                calculateStatus: 'no-status'
+            })
+            alert('Server error')
+            return
+        }
+
+        if (optimalPaths.data === 'API Error') {
+            this.setState({
+                calculateStatus: 'no-status'
+            })
+            alert('API Error')
+            return
+        }
 
         this.setState({
             bestPathTime: optimalPaths.data.optimalPathTime,
-            bestPathDistance: optimalPaths.data.optimalPathDistance
+            bestPathDistance: optimalPaths.data.optimalPathDistance,
+            bestPathTimeNames: optimalPaths.data.optimalPathTimeNames,
+            bestPathDistanceNames: optimalPaths.data.optimalPathDistanceNames
         }, () => {
             console.log(this.state.bestPathDistance)
             console.log(typeof (this.state.bestPathDistance))
@@ -139,6 +161,9 @@ class AddressDisplay extends Component {
                 bestPathDistanceLink: distLink,
                 calculateStatus: 'calculate-button-done'
             })
+            alert(
+                `Best path time:\n${this.state.bestPathTimeNames.join(', ')}\n${this.state.bestPathTime.join(' || ')}\n\nBest path distance:\n${this.state.bestPathDistanceNames.join(', ')}\n${this.state.bestPathDistance.join(' || ')}`
+            );
         })
     }
 
@@ -152,7 +177,7 @@ class AddressDisplay extends Component {
             avoidToll: avoidToll
         }
         return new Promise((resolve, reject) => {
-            axios.post(url, params)
+            axios.post(url, params, { timeout: 5000 })
                 .then(response => {
                     resolve(response)
                 })

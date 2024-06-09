@@ -8,6 +8,7 @@ class DistanceFormat {
         this.places = places
         this.avoidToll = avoidToll
         this.flattenedPlaces = []
+        this.flattenedPlacesNames = []
 
 
         this.idMap = new Map()
@@ -21,41 +22,47 @@ class DistanceFormat {
         this.numPathsTimeChecked = 0
         this.currBestTime = Number.MAX_SAFE_INTEGER
         this.bestPathTime = []
+        this.bestPathTimeNames = []
 
         this.numPathsDistanceChecked = 0
         this.currBestDistance = Number.MAX_SAFE_INTEGER
         this.bestPathDistance = []
+        this.bestPathDistanceNames = []
     }
 
     async optimize() {
         // create id map
         this.assignTypeAndId()
-        
+
         // create distance from start and end
         await this.startEndMapify()
-        
+
         // create relation map w/ distance matrix
         await this.mapify()
 
         console.log('all distances fetched')
 
-        // console.log(this.placeMap)
-        // console.log(this.startMap)
-        // console.log(this.endMap)
+        console.log(this.placeMap)
+        console.log(this.startMap)
+        console.log(this.endMap)
 
         // for every first stop, backpropogate
         for (let address of this.startMap.keys()) {
             this.backPropagateTime(address, new Set([this.typeMap.get(address)]), [address], this.startMap.get(address).travelTime)
         }
-        
+
         console.log('optimal time path found')
         console.log(this.bestPathTime)
         console.log('paths checked', this.numPathsTimeChecked)
         console.log('best time', this.currBestTime)
 
+        this.bestPathTimeNames = this.fetchNames(this.bestPathTime, this.flattenedPlaces, this.flattenedPlacesNames)
+
         for (let address of this.startMap.keys()) {
             this.backPropagateDistance(address, new Set([this.typeMap.get(address)]), [address], this.startMap.get(address).distance)
         }
+
+        this.bestPathDistanceNames = this.fetchNames(this.bestPathDistance, this.flattenedPlaces, this.flattenedPlacesNames)
 
         console.log('optimal distance path found')
         console.log(this.bestPathDistance)
@@ -63,12 +70,18 @@ class DistanceFormat {
         console.log('best distance', this.currBestDistance)
     }
 
+    fetchNames(path, addresses, names) {
+        return path.map(place =>
+            names[addresses.indexOf(place)]
+        )
+    }
+
 
     assignTypeAndId() {
         let counter = 0
-        for (let type = 0; type<this.places.length; type++) {
+        for (let type = 0; type < this.places.length; type++) {
             let placeList = this.places[type]
-            for (let place = 0; place<placeList.length; place++) {
+            for (let place = 0; place < placeList.length; place++) {
                 const currentAddress = placeList[place].address
                 if (this.typeMap.has(currentAddress)) {
                     console.log(currentAddress, ' already in map')
@@ -82,19 +95,21 @@ class DistanceFormat {
 
         this.flattenedPlaces = this.places.flatMap(placeList => placeList.map(place => place.address))
         this.flattenedPlacesNames = this.places.flatMap(placeList =>
-        placeList.map(place => place.name))
+            placeList.map(place => place.name))
     }
 
     async startEndMapify() {
         const startMetrics = await this.fetchDistance([this.start.address], this.flattenedPlaces)
-        for (let index = 0; index<startMetrics.rows[0].elements.length; index++) {
-            this.startMap.set(this.idMap.get(index), {travelTime: startMetrics.rows[0].elements[index].duration_in_traffic.value, distance: startMetrics.rows[0].elements[index].distance.value})
+        console.log(startMetrics)
+        for (let index = 0; index < startMetrics.rows[0].elements.length; index++) {
+            this.startMap.set(this.idMap.get(index), { travelTime: startMetrics.rows[0].elements[index].duration.value, distance: startMetrics.rows[0].elements[index].distance.value })
         }
 
 
         const endMetrics = await this.fetchDistance(this.flattenedPlaces, [this.end.address])
-        for (let index = 0; index<endMetrics.rows.length; index++) {
-            this.endMap.set(this.idMap.get(index), {travelTime: endMetrics.rows[index].elements[0].duration_in_traffic.value, distance: endMetrics.rows[index].elements[0].distance.value})
+        console.log(endMetrics)
+        for (let index = 0; index < endMetrics.rows.length; index++) {
+            this.endMap.set(this.idMap.get(index), { travelTime: endMetrics.rows[index].elements[0].duration.value, distance: endMetrics.rows[index].elements[0].distance.value })
         }
     }
 
@@ -103,25 +118,27 @@ class DistanceFormat {
         const blockSize = Math.floor(100 / this.flattenedPlaces.length)
         for (let startIndex = 0; startIndex < this.flattenedPlaces.length; startIndex += blockSize) {
             // create the small strip
-            const startStrip = this.flattenedPlaces.slice(startIndex, startIndex+blockSize)
+            const startStrip = this.flattenedPlaces.slice(startIndex, startIndex + blockSize)
             const metrics = await this.fetchDistance(startStrip, this.flattenedPlaces)
 
-            for (let row = 0; row<metrics.rows.length; row++) {
+            for (let row = 0; row < metrics.rows.length; row++) {
                 const currRow = metrics.rows[row]
                 // create this entry in map
-                const currAddress = this.idMap.get(row+startIndex)
+                const currAddress = this.idMap.get(row + startIndex)
                 const currAddressType = this.typeMap.get(currAddress)
                 this.placeMap.set(currAddress, [])
-                for (let element = 0; element<currRow.elements.length; element++) {
+                for (let element = 0; element < currRow.elements.length; element++) {
                     // item to be considered
                     const potentialNeighborAddress = this.idMap.get(element)
                     const potentialNeighborType = this.typeMap.get(potentialNeighborAddress)
                     // only add if different type and id
                     if (potentialNeighborType !== currAddressType) {
-                        this.placeMap.get(currAddress).push({address: potentialNeighborAddress, type: 
-                            potentialNeighborType, travelTime: currRow.elements[element].duration_in_traffic.value, distance: currRow.elements[element].distance.value})
+                        this.placeMap.get(currAddress).push({
+                            address: potentialNeighborAddress, type:
+                                potentialNeighborType, travelTime: currRow.elements[element].duration.value, distance: currRow.elements[element].distance.value
+                        })
                     }
-                    
+
                 }
             }
         }
@@ -136,20 +153,20 @@ class DistanceFormat {
         const destinations = 'destinations=' + endAddresses.map(address => this.encodeAddress(address)).join('|');
         const units = '&units=metric'
         const avoidToll = this.avoidToll ? '&avoid=tolls' : ''
-        const departureTime = '&departure_time=now'; // Use 'now' or a Unix timestamp in seconds
+        // const departureTime = '&departure_time=now'; // Use 'now' or a Unix timestamp in seconds
         const apiKey = '&key=AIzaSyA438rz5gimhiPCCyXYR64pG6813qJUnA8'
 
-        const url = `${urlBase}?${origins}&${destinations}${units}${avoidToll}${departureTime}${apiKey}`;
+        const url = `${urlBase}?${origins}&${destinations}${units}${avoidToll}${apiKey}`;
 
         return new Promise((resolve, reject) => {
             axios.get(url)
-            .then(response => {
-                resolve(response.data)
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                reject(error)
-            });
+                .then(response => {
+                    resolve(response.data)
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    reject(error)
+                });
         })
     }
 
@@ -172,8 +189,7 @@ class DistanceFormat {
         }
         // iterate
 
-        // console.log(this.placeMap)
-    
+
         let nextStops = this.placeMap.get(currentAddress)
 
         nextStops.forEach((place) => {
@@ -187,7 +203,7 @@ class DistanceFormat {
                 // un-update
                 visitedTypes.delete(place.type)
                 currentPath.pop()
-                
+
             }
         })
 
@@ -223,7 +239,7 @@ class DistanceFormat {
                 // un-update
                 visitedTypes.delete(place.type)
                 currentPath.pop()
-                
+
             }
         })
 

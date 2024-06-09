@@ -1,13 +1,22 @@
+console.log(__dirname)
+
+
 const DistanceFormat = require('../DistanceFormat.js')
 
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const path = require('path'); // Import the path module
+
+
+
 
 const app = express();
-const port = 5001; // You can choose any port
+const port = 80; // You can choose any port
 
+
+app.use(express.static(path.join(__dirname, '../build')));
 app.use(cors())
 app.use(bodyParser.json());
 
@@ -33,6 +42,10 @@ function filterUniquePlaces(places) {
   console.log('dupes', dupes)
   return uniquePlaces.slice(0, Math.min(uniquePlaces.length, 20));
 }
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../build', 'index.html'));
+});
 
 // Add more routes as needed
 
@@ -105,12 +118,21 @@ app.post('/optimal_path', async (req, res) => {
 
   // create DistanceFormat object
   let optimalPaths = new DistanceFormat(startAddress, endAddress, places, avoidToll)
-  await optimalPaths.optimize()
+  try {
+    await optimalPaths.optimize()
+  }
+  catch {
+    console.log('API Error')
+    res.json('API Error')
+    return
+  }
 
   const optimalPathTime = optimalPaths.bestPathTime
   const optimalPathDistance = optimalPaths.bestPathDistance
+  const optimalPathTimeNames = optimalPaths.bestPathTimeNames
+  const optimalPathDistanceNames = optimalPaths.bestPathDistanceNames
 
-  res.json({optimalPathTime, optimalPathDistance})
+  res.json({optimalPathTime, optimalPathDistance, optimalPathTimeNames, optimalPathDistanceNames})
 
 })
 

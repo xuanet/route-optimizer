@@ -57,7 +57,7 @@ export class AddressDisplayHelper extends Component {
         };
 
         return new Promise((resolve, reject) => {
-            axios.post(url, params)
+            axios.post(url, params, { timeout: 5000 })
                 .then(response => {
                     resolve(response)
                 })
@@ -80,14 +80,18 @@ export class AddressDisplayHelper extends Component {
         const apiKey = this.state.apiKey
 
         // make api request
-        let foundPlaces = await this.fetchPlaces(startAddress, endAddress, keyword, apiKey)
-        console.log(foundPlaces)
 
-        this.setState({
-            places: foundPlaces.data
-        }, () => {
-            this.handleAddressChange()
-        })
+        try {
+            let foundPlaces = await this.fetchPlaces(startAddress, endAddress, keyword, apiKey)
+            this.setState({
+                places: foundPlaces.data
+            }, () => {
+                this.handleAddressChange()
+            })
+        }
+        catch {
+            alert('Server error')
+        }
     }
 
 
