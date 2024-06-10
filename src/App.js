@@ -1,25 +1,19 @@
 import './App.css';
-import { useState, useEffect } from 'react'
 import Header from './components/Header';
-import SearchAddress from './components/SearchAddress';
-import AddressDisplay from './components/AddressDisplay';
-import axios from 'axios'
-
-import './components/styles/TestMapStyles.css'
-
-import { LoadScript } from '@react-google-maps/api';
+import StartEndAddressSelector from './components/StartEndAddressSelector';
 import StartEndAddressDisplay from './components/StartEndAddressDisplay';
+import InputModifier from './components/InputModifier';
 
-const apiKeyMap = 'AIzaSyBSxhXCH1UBbtgc9CmobRec-gRLt_MHb1Q'
-const apiKeyAutocomplete = 'AIzaSyCk8Y40ZcvbAnqIQKmBuxDn66JwCJM8sTU'
-const apiKeyDistanceMatrix = 'AIzaSyA438rz5gimhiPCCyXYR64pG6813qJUnA8'
+import { useState } from 'react'
+import { LoadScript } from '@react-google-maps/api';
+
+const apiKey = process.env.REACT_APP_API_KEY
 const libraries = ['places'];
 
 function App() {
-	
+
 	const [startAddress, setStartAddress] = useState({ address: 'Unset', lat: 0, lng: 0 });
 	const [endAddress, setEndAddress] = useState({ address: 'Unset', lat: 0, lng: 0 });
-
 
 	const selectStart = (place) => {
 		if (place.geometry && place.geometry.location) {
@@ -51,11 +45,11 @@ function App() {
 
 	return (
 		<div className="App">
-			<LoadScript googleMapsApiKey={apiKeyAutocomplete} libraries={libraries}>
+			<LoadScript googleMapsApiKey={apiKey} libraries={libraries}>
 				<Header />
-				<SearchAddress apiKey={apiKeyAutocomplete} selectStart={selectStart} selectEnd={selectEnd}></SearchAddress>
-				<StartEndAddressDisplay startAddress={startAddress} endAddress={endAddress}></StartEndAddressDisplay>
-				<AddressDisplay startAddress={startAddress} endAddress={endAddress} apiKey={apiKeyMap}></AddressDisplay>
+				<StartEndAddressSelector apiKey={apiKey} selectStart={selectStart} selectEnd={selectEnd} />
+				<StartEndAddressDisplay startAddress={startAddress} endAddress={endAddress} />
+				<InputModifier startAddress={startAddress} endAddress={endAddress} apiKey={apiKey} />
 			</LoadScript>
 		</div>
 	);
